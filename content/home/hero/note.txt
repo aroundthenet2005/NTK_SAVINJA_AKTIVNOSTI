@@ -1,1 +1,1 @@
-Če si igralec: samo poglej urnik. Če si admin: uporabi admin stran za urejanje (ne pošiljaj linka naprej).
+Pri razdelku "Filtri" pod razdelkom "Igralec" najdi in izberi svoje ime in videl boš samo svoje treninge in tekme
