@@ -1,1 +1,1 @@
-Urejaš igralce, trenerje, lokacije in treninge. Ne urejaš HTML. Na koncu izvoziš DB in zamenjaš data/db.json.
+Urejaš igralce, trenerje, lokacije treninge in turnirje. Na koncu klikneš gumb Objavi na splet in vpišeš kodo.
