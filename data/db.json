@@ -5,20 +5,12 @@
   },
   "players": [
     {
-      "id": "p1",
-      "name": "Igralec 1"
-    },
-    {
-      "id": "p2",
-      "name": "Igralec 2"
-    },
-    {
-      "id": "p3",
-      "name": "Igralec 3"
-    },
-    {
       "id": "p_1cc528ef_19be7c4865b",
       "name": "DOMEN HOHNJEC"
+    },
+    {
+      "id": "p_91c6a37d_19be7e34e8b",
+      "name": "MIHA PODOBNIK"
     }
   ],
   "coaches": [
