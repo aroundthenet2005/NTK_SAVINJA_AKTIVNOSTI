@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title>
+<meta name="description" content="" data-text="shared/meta/description">
+<link rel="stylesheet" href="assets/css/style.css">
+<script defer src="assets/js/app.js"></script>
+
+</head>
+<body data-page="admin">
+
+<header class="topbar">
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="index.html" aria-label="Home">
+        <span class="logo"></span>
+        <span data-text="shared/brand/name"></span>
+      </a>
+
+      <nav class="navlinks" aria-label="Main navigation">
+        <a href="index.html" data-text="shared/nav/koledar"></a>
+        <a href="kontakt.html" data-text="shared/nav/kontakt"></a>
+      </nav>
+
+      <div class="navcta">
+        <a class="btn" data-href="shared/contact/phone_link" data-text="shared/contact/phone_label"></a>
+        <a class="btn primary" href="kontakt.html">Kontakt</a>
+      </div>
+
+      <div class="hamburger">
+        <button data-burger aria-label="Open menu">Meni</button>
+      </div>
+    </div>
+
+    <div class="mobilemenu" data-mobilemenu>
+      <a href="index.html" data-text="shared/nav/koledar"></a>
+      <a href="kontakt.html" data-text="shared/nav/kontakt"></a>
+      <div class="hr"></div>
+      <a class="btn primary" href="kontakt.html" style="width:100%; text-align:center;">Kontakt</a>
+    </div>
+  </div>
+</header>
+
+<main class="section">
+  <div class="container">
+    <div class="card pad">
+      <h1 data-text="admin/page/title"></h1>
+      <p class="lead" data-text="admin/page/lead"></p>
+
+      <div class="notice">
+        <strong>Pomembno:</strong> spremembe se shranijo <strong>lokalno v tem brskalniku</strong> (da jih takoj vidiš tudi na public strani na isti napravi). Za igralce/ostale naprave jih objaviš tako, da izvoziš <code>db.json</code> in na hostingu zamenjaš <code>/data/db.json</code>.
+        Potem zamenjaš <code>/data/db.json</code> na hostingu.
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="kpi">
+        <div class="k">
+          <div class="n" data-admin-kpi-tr>0</div>
+          <div class="l">Treningov (predloge)</div>
+        </div>
+        <div class="k">
+          <div class="n" data-admin-kpi-instances>0</div>
+          <div class="l">Prihajajočih instanc</div>
+        </div>
+        <div class="k">
+          <div class="n" data-admin-kpi-players>0</div>
+          <div class="l">Igralcev</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="filters">
+        <button class="btn primary" data-add-tr>+ Dodaj trening</button>
+        <button class="btn primary" data-admin-publish>Objavi na splet</button>
+        <button class="btn" data-admin-settings>Nastavitve prikaza</button>
+        <button class="btn" data-admin-export>Izvozi db.json</button>
+        <button class="btn" data-admin-import>Uvozi db.json</button>
+        <button class="btn danger" data-admin-reset>Počisti lokalno</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="grid3">
+        <div class="card pad">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">Igralci</h3>
+            <button class="btn" data-add-player>+ Dodaj</button>
+          </div>
+          <div class="hr"></div>
+          <table class="table">
+            <thead><tr><th>Ime</th><th></th></tr></thead>
+            <tbody data-admin-players></tbody>
+          </table>
+        </div>
+
+        <div class="card pad">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">Trenerji</h3>
+            <button class="btn" data-add-coach>+ Dodaj</button>
+          </div>
+          <div class="hr"></div>
+          <table class="table">
+            <thead><tr><th>Ime</th><th></th></tr></thead>
+            <tbody data-admin-coaches></tbody>
+          </table>
+        </div>
+
+        <div class="card pad">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">Lokacije</h3>
+            <button class="btn" data-add-loc>+ Dodaj</button>
+          </div>
+          <div class="hr"></div>
+          <table class="table">
+            <thead><tr><th>Lokacija</th><th>Naslov</th><th></th></tr></thead>
+            <tbody data-admin-locations></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Treningi</h2>
+      <div class="small">To so “predloge”, ki se lahko ponavljajo (tedensko / na 2 tedna / mesečno / letno).</div>
+      <div class="hr"></div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Trening</th>
+            <th>Start</th>
+            <th>Lokacija</th>
+            <th>Trener</th>
+            <th>Ponavljanje</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody data-admin-trainings></tbody>
+      </table>
+
+      <div class="hr"></div>
+      <div class="notice">
+        PIN spremeniš v: <code>content/admin/pin.txt</code>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="card pad">
+        <div class="brand" style="margin-bottom:10px;">
+          <span class="logo"></span>
+          <strong data-text="shared/brand/name"></strong>
+        </div>
+        <div class="small" data-text="shared/meta/description"></div>
+        <div class="hr"></div>
+        <div class="small">Admin: <a href="admin.html">admin.html</a> (ne pošiljaj igralcem)</div>
+      </div>
+
+      <div class="card pad">
+        <h3>Kontakt</h3>
+        <div class="small">
+          Telefon: <a data-href="shared/contact/phone_link" data-text="shared/contact/phone_label"></a><br>
+          Email: <a data-href="shared/contact/email_link" data-text="shared/contact/email_label"></a><br>
+          Naslov: <span data-text="shared/contact/address"></span>
+        </div>
+        <div class="hr"></div>
+        <div class="small" data-text="shared/contact/hours"></div>
+      </div>
+
+      <div class="card pad">
+        <h3>Namig</h3>
+        <div class="small">
+          Igralcem pošlji link do index.html. Admin link (admin.html) naj ostane pri tebi.
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="modal" data-modal role="dialog" aria-modal="true" aria-label="Details">
+  <div class="box">
+    <div class="head">
+      <strong data-modal-title>Podrobnosti</strong>
+      <button class="btn" data-modal-close>Zapri</button>
+    </div>
+    <div class="body" data-modal-body></div>
+  </div>
+</div>
+
+</body>
+</html>

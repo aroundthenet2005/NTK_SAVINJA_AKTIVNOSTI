@@ -1,0 +1,1 @@
+Če si igralec: samo poglej urnik. Če si admin: uporabi admin stran za urejanje (ne pošiljaj linka naprej).

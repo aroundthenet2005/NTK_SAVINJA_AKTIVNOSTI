@@ -1,0 +1,86 @@
+{
+  "settings": {
+    "timezone": "Europe/Ljubljana",
+    "publicDaysAhead": 365
+  },
+  "players": [
+    {
+      "id": "p1",
+      "name": "Igralec 1"
+    },
+    {
+      "id": "p2",
+      "name": "Igralec 2"
+    },
+    {
+      "id": "p3",
+      "name": "Igralec 3"
+    }
+  ],
+  "coaches": [
+    {
+      "id": "c1",
+      "name": "Glavni trener"
+    },
+    {
+      "id": "c2",
+      "name": "Pomočnik 1"
+    }
+  ],
+  "locations": [
+    {
+      "id": "l1",
+      "name": "Dvorana A",
+      "address": "Naslov A",
+      "mapsUrl": "https://www.google.com/maps"
+    },
+    {
+      "id": "l2",
+      "name": "Dvorana B",
+      "address": "Naslov B",
+      "mapsUrl": "https://www.google.com/maps"
+    }
+  ],
+  "trainings": [
+    {
+      "id": "t1",
+      "title": "Skupinski trening",
+      "start": "2026-01-22T18:00",
+      "durationMin": 90,
+      "locationId": "l1",
+      "headCoachId": "c1",
+      "assistantCoachIds": [
+        "c2"
+      ],
+      "playerIds": [
+        "p1",
+        "p2",
+        "p3"
+      ],
+      "notes": "Fokus: servis + tretja žoga.",
+      "recurrence": {
+        "type": "weekly",
+        "interval": 1,
+        "until": "2026-04-30"
+      }
+    },
+    {
+      "id": "t2",
+      "title": "Individualni trening",
+      "start": "2026-01-23T17:00",
+      "durationMin": 60,
+      "locationId": "l2",
+      "headCoachId": "c1",
+      "assistantCoachIds": [],
+      "playerIds": [
+        "p1"
+      ],
+      "notes": "Video analiza + footwork.",
+      "recurrence": {
+        "type": "biweekly",
+        "interval": 2,
+        "until": "2026-03-31"
+      }
+    }
+  ]
+}
