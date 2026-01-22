@@ -1,1 +1,1 @@
-https://ntksavinjaaktivnosti.netlify.app/.netlify/functions/publish-db
+https://elegant-cascaron-4f5f78.netlify.app/.netlify/functions/publish-db
