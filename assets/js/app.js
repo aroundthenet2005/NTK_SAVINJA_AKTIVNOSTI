@@ -1,3 +1,16 @@
+(function(){
+  let shown = false;
+  const show = (msg) => {
+    if (shown) return; shown = true;
+    const d = document.createElement("div");
+    d.style.cssText="position:fixed;inset:0;z-index:999999;background:#000c;color:#fff;padding:16px;font:14px system-ui;overflow:auto";
+    d.textContent = "NAPAKA NA TELEFONU: " + msg;
+    document.body.appendChild(d);
+  };
+  window.addEventListener("error", (e)=>show(e.message || "JS error"));
+  window.addEventListener("unhandledrejection", (e)=>show(e.reason?.message || String(e.reason)));
+  try { localStorage.getItem("__test__"); } catch(e){ show("localStorage blokiran (cookies/storage). Omogoči cookies/storage ali uporabi drug brskalnik."); }
+})();
 const CACHE = new Map();
 const STORAGE_KEY = "tp_db_override_v1";
 
