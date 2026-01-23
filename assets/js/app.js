@@ -1,16 +1,12 @@
-(function(){
-  let shown = false;
-  const show = (msg) => {
-    if (shown) return; shown = true;
-    const d = document.createElement("div");
-    d.style.cssText="position:fixed;inset:0;z-index:999999;background:#000c;color:#fff;padding:16px;font:14px system-ui;overflow:auto";
-    d.textContent = "NAPAKA NA TELEFONU: " + msg;
-    document.body.appendChild(d);
-  };
-  window.addEventListener("error", (e)=>show(e.message || "JS error"));
-  window.addEventListener("unhandledrejection", (e)=>show(e.reason?.message || String(e.reason)));
-  try { localStorage.getItem("__test__"); } catch(e){ show("localStorage blokiran (cookies/storage). Omogoči cookies/storage ali uporabi drug brskalnik."); }
+// --- Base-path safe loader (GitHub Pages / project pages) ---
+const __TP_DIR = (() => {
+  const p = location.pathname;
+  if (p.endsWith(".html")) return p.replace(/\/[^\/]*$/, "/"); // /admin.html -> /
+  if (p.endsWith("/")) return p;                               // already dir
+  return p + "/";                                              // /NTK_SAVINJA_AKTIVNOSTI -> /NTK_SAVINJA_AKTIVNOSTI/
 })();
+const __TP_BASE = location.origin + __TP_DIR;
+const withBase = (rel) => new URL(rel, __TP_BASE).toString();
 const CACHE = new Map();
 const STORAGE_KEY = "tp_db_override_v1";
 
@@ -39,17 +35,15 @@ async function loadDB(){
     return local;
   }
   window.__DB_SOURCE = "file";
-  return await fetchJSON("data/db.json");
+  return await fetch(withBase("data/db.json"), { cache: "no-store" });
 }
 
-async function fetchText(url){
-  if(CACHE.has(url)) return CACHE.get(url);
-  const res = await fetch(url, { cache: "no-store" });
-  if(!res.ok) return "";
-  const txt = await res.text();
-  CACHE.set(url, txt);
-  return txt;
+async function fetchText(path) {
+  const res = await fetch(withBase(path), { cache: "no-store" });
+  if (!res.ok) throw new Error(`Fetch failed ${res.status} for ${path}`);
+  return await res.text();
 }
+
 
 async function fetchJSON(url){
   const res = await fetch(url, { cache: "no-store" });
