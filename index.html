@@ -88,7 +88,12 @@
           </div>
           <div style="flex:1; min-width:180px;">
             <label class="small" data-text="home/filters/player"></label>
-            <select class="input" data-filter-player></select>
+            <select class="input" data-filter-player><<div class="combo" data-player-combo>
+  <input class="input" type="text" placeholder="Išči igralca..." data-player-search>
+  <button class="btn" type="button" data-player-clear style="margin-top:8px;">× Počisti</button>
+  <div class="combo-list" data-player-list></div>
+</div>
+>
           </div>
         </div>
       </div>
