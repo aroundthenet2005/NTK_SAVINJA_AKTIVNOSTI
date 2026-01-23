@@ -608,6 +608,64 @@ async function adminPage(){
 if (publishBtn) publishBtn.addEventListener("click", async () => {
   const storageKey = "tp_publish_key";
 
+  // Custom modal (ne uporablja browser prompt, zato ni blokad)
+  const askKey = ({ attempt, total, preset = "" }) => new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;";
+
+    const card = document.createElement("div");
+    card.style.cssText =
+      "width:min(520px,100%);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:16px;color:#e5e7eb;font-family:system-ui,Segoe UI,Roboto,Arial;";
+
+    card.innerHTML = `
+      <div style="font-size:18px;font-weight:700;margin-bottom:6px;">Objavi na splet</div>
+      <div style="opacity:.8;margin-bottom:12px;">Vnesi PUBLISH ključ (poskus ${attempt}/${total}).</div>
+      <input id="tpKeyInput" type="password" autocomplete="off" placeholder="PUBLISH ključ"
+        style="width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#e5e7eb;outline:none;">
+      <div id="tpKeyErr" style="display:none;color:#fca5a5;margin-top:10px;">Ključ ne sme biti prazen.</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+        <button id="tpCancel" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#e5e7eb;cursor:pointer;">Prekliči</button>
+        <button id="tpOk" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#2563eb;color:white;cursor:pointer;">Potrdi</button>
+      </div>
+      <div style="opacity:.65;margin-top:10px;font-size:12px;">
+        Namig: če si prej vpisal napačen ključ, se bo ob prvi napaki sam izbrisal.
+      </div>
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const input = card.querySelector("#tpKeyInput");
+    const err = card.querySelector("#tpKeyErr");
+    input.value = preset || "";
+    setTimeout(() => input.focus(), 0);
+
+    const close = (val) => {
+      overlay.remove();
+      resolve(val);
+    };
+
+    card.querySelector("#tpCancel").onclick = () => close(null);
+    overlay.onclick = (e) => { if (e.target === overlay) close(null); };
+
+    const submit = () => {
+      const val = (input.value || "").trim();
+      if (!val) {
+        err.style.display = "block";
+        input.focus();
+        return;
+      }
+      close(val);
+    };
+
+    card.querySelector("#tpOk").onclick = submit;
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submit();
+      if (e.key === "Escape") close(null);
+    });
+  });
+
   try {
     publishBtn.disabled = true;
     publishBtn.textContent = "Objavljam...";
@@ -616,12 +674,12 @@ if (publishBtn) publishBtn.addEventListener("click", async () => {
       (await fetchText("content/admin/publish_endpoint.txt")).trim() ||
       "/.netlify/functions/publish-db";
 
-    // Preberi shranjen ključ (če obstaja). Ob 401 ga pobrišemo in vprašamo ponovno.
     let key = localStorage.getItem(storageKey) || "";
 
     for (let attempt = 1; attempt <= 10; attempt++) {
+      // Če nimamo ključa (ali smo ga izbrisali), vprašaj prek modala
       if (!key) {
-        key = prompt(`Vnesi PUBLISH ključ (poskus ${attempt}/10):`);
+        key = await askKey({ attempt, total: 10 });
         if (!key) {
           alert("Objava preklicana.");
           return;
@@ -633,6 +691,42 @@ if (publishBtn) publishBtn.addEventListener("click", async () => {
         headers: { "content-type": "application/json", "x-publish-key": key },
         body: JSON.stringify({ db }),
       });
+
+      const out = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        // Shranimo samo, če je bil ključ pravilen.
+        localStorage.setItem(storageKey, key);
+        alert(
+          "Objavljeno v GitHub. GitHub Pages bo posodobil stran po commitu.\n" +
+          (out.commitUrl ? `Commit: ${out.commitUrl}` : "")
+        );
+        return;
+      }
+
+      if (res.status === 401) {
+        // Napačen ključ: pobriši in dovoli nov vnos (do 10x).
+        key = "";
+        localStorage.removeItem(storageKey);
+
+        if (attempt === 10) {
+          alert("Napaka pri objavi: Unauthorized (preveč poskusov).");
+          return;
+        }
+        continue;
+      }
+
+      alert("Napaka pri objavi: " + (out.error || res.status));
+      return;
+    }
+  } catch (e) {
+    alert("Napaka pri objavi: " + (e && e.message ? e.message : e));
+  } finally {
+    publishBtn.disabled = false;
+    publishBtn.textContent = "Objavi na splet";
+  }
+});
+
 
       const out = await res.json().catch(() => ({}));
 
