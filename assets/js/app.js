@@ -605,33 +605,70 @@ async function adminPage(){
   });
 
   const publishBtn = document.querySelector("[data-admin-publish]");
-  if(publishBtn) publishBtn.addEventListener("click", async ()=>{
-    try{
-      const storageKey = "tp_publish_key";
-      let key = localStorage.getItem(storageKey) || "";
-      if(!key){
-        key = prompt("Vnesi PUBLISH ključ (enkratno; shrani se samo v ta brskalnik):");
-        if(!key) return;
-        localStorage.setItem(storageKey, key);
+if (publishBtn) publishBtn.addEventListener("click", async () => {
+  const storageKey = "tp_publish_key";
+
+  try {
+    publishBtn.disabled = true;
+    publishBtn.textContent = "Objavljam...";
+
+    const endpoint =
+      (await fetchText("content/admin/publish_endpoint.txt")).trim() ||
+      "/.netlify/functions/publish-db";
+
+    // Preberi shranjen ključ (če obstaja). Ob 401 ga pobrišemo in vprašamo ponovno.
+    let key = localStorage.getItem(storageKey) || "";
+
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      if (!key) {
+        key = prompt(`Vnesi PUBLISH ključ (poskus ${attempt}/10):`);
+        if (!key) {
+          alert("Objava preklicana.");
+          return;
+        }
       }
-      publishBtn.disabled = true;
-      publishBtn.textContent = "Objavljam...";
-            const endpoint = (await fetchText("content/admin/publish_endpoint.txt")).trim() || "/.netlify/functions/publish-db";
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json", "x-publish-key": key },
-        body: JSON.stringify({ db })
+        body: JSON.stringify({ db }),
       });
-      const out = await res.json().catch(()=>({}));
-      if(!res.ok){ alert("Napaka pri objavi: " + (out.error || res.status)); return; }
-      alert("Objavljeno v GitHub. Netlify bo naredil nov deploy (push -> deploy).\n" + (out.commitUrl ? ("Commit: " + out.commitUrl) : ""));
-    }catch(e){
-      alert("Napaka pri objavi: " + (e && e.message ? e.message : e));
-    }finally{
-      publishBtn.disabled = false;
-      publishBtn.textContent = "Objavi na splet";
+
+      const out = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        // Shrani samo, če je bil ključ pravilen.
+        localStorage.setItem(storageKey, key);
+        alert(
+          "Objavljeno v GitHub. GitHub Pages bo posodobil stran po commitu.\n" +
+            (out.commitUrl ? `Commit: ${out.commitUrl}` : "")
+        );
+        return;
+      }
+
+      if (res.status === 401) {
+        // Napačen ključ: počistimo in vprašamo ponovno.
+        key = "";
+        localStorage.removeItem(storageKey);
+
+        if (attempt === 10) {
+          alert("Napaka pri objavi: Unauthorized (preveč poskusov).");
+          return;
+        }
+        continue;
+      }
+
+      alert("Napaka pri objavi: " + (out.error || res.status));
+      return;
     }
-  });
+  } catch (e) {
+    alert("Napaka pri objavi: " + (e && e.message ? e.message : e));
+  } finally {
+    publishBtn.disabled = false;
+    publishBtn.textContent = "Objavi na splet";
+  }
+});
+
 
   const resetBtn = document.querySelector("[data-admin-reset]");
   if(resetBtn) resetBtn.addEventListener("click", ()=>{
