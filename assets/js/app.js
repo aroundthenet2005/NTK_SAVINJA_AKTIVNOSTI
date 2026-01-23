@@ -369,6 +369,50 @@ async function homePage(){
   makeSelectOptions(coachSel, db.coaches, "Vsi trenerji");
   makeSelectOptions(locSel, db.locations, "Vse lokacije");
   makeSelectOptions(playerSel, db.players, "Vsi igralci");
+  const playerQ = document.querySelector("[data-filter-player-q]");
+const allPlayers = (db.players || []).slice();
+
+function rebuildPlayerOptions(query){
+  if(!playerSel) return;
+
+  const q = String(query || "").toLowerCase().trim();
+  const selected = playerSel.value;
+
+  let list = allPlayers;
+  if(q){
+    list = allPlayers.filter(p => (p.name || "").toLowerCase().includes(q));
+  }
+
+  playerSel.innerHTML = "";
+
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "Vsi igralci";
+  playerSel.appendChild(opt0);
+
+  const frag = document.createDocumentFragment();
+  for(const p of list){
+    const o = document.createElement("option");
+    o.value = p.id;
+    o.textContent = p.name || "";
+    frag.appendChild(o);
+  }
+  playerSel.appendChild(frag);
+
+  // restore selection if still in filtered list
+  if(selected && list.some(p => p.id === selected)){
+    playerSel.value = selected;
+  } else if(selected){
+    playerSel.value = "";
+  }
+}
+
+rebuildPlayerOptions("");
+
+if(playerQ){
+  playerQ.addEventListener("input", ()=>rebuildPlayerOptions(playerQ.value));
+}
+
 
   let viewMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const emptyText = (await fetchText("content/home/upcoming/empty.txt")).trim();
