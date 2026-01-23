@@ -1,24 +1,14 @@
 "use strict";
 
-/* ============================================================================
-   NTK_SAVINJA_AKTIVNOSTI — app.js (FIXED)
-   - Odpravi "prazno vse": odstrani syntax error (newline v stringu) + odstrani
-     podvojeni publish blok (await izven async).
-   - Dodana robustnost: BASE URL, varno fetchanje, guardi za manjkajoče elemente,
-     main() try/catch, da ena napaka ne ubije cele strani.
-============================================================================ */
-
 const CACHE = new Map();
 const STORAGE_KEY = "tp_db_override_v1";
-const BASE = new URL(".", window.location.href);
 
-function abs(url) {
-  // podpira relativne poti + absolutne URL-je
-  try { return new URL(url, BASE).toString(); } catch { return String(url || ""); }
+function resolveUrl(url){
+  const u = String(url || "").trim();
+  if(!u) return u;
+  try { return new URL(u, window.location.href).toString(); }
+  catch { return u; }
 }
-
-function q(sel, root = document) { return root.querySelector(sel); }
-function qa(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
 
 function loadLocalDB(){
   try{
@@ -38,8 +28,18 @@ function clearLocalDB(){
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
 }
 
+async function loadDB(){
+  const local = loadLocalDB();
+  if(local){
+    window.__DB_SOURCE = "local";
+    return local;
+  }
+  window.__DB_SOURCE = "file";
+  return await fetchJSON("data/db.json");
+}
+
 async function fetchText(url){
-  const full = abs(url);
+  const full = resolveUrl(url);
   if(CACHE.has(full)) return CACHE.get(full);
   const res = await fetch(full, { cache: "no-store" });
   if(!res.ok) return "";
@@ -49,34 +49,17 @@ async function fetchText(url){
 }
 
 async function fetchJSON(url){
-  const full = abs(url);
+  const full = resolveUrl(url);
   const res = await fetch(full, { cache: "no-store" });
   if(!res.ok) throw new Error("Fetch failed: " + url);
-  // res.json() lahko vrže, če JSON ni validen
   return await res.json();
-}
-
-async function loadDB(){
-  const local = loadLocalDB();
-  if(local){
-    window.__DB_SOURCE = "local";
-    return local;
-  }
-  window.__DB_SOURCE = "file";
-  try {
-    return await fetchJSON("data/db.json");
-  } catch (e) {
-    console.error("DB load failed:", e);
-    // Ne sesuj cele strani – vrni prazen DB
-    return { players: [], coaches: [], locations: [], trainings: [], settings: { publicDaysAhead: 60 } };
-  }
 }
 
 function norm(p){ return (p||"").trim().replace(/^\/+/, ""); }
 
 async function hydrateTexts(){
-  const nodes = qa("[data-text]");
-  await Promise.all(nodes.map(async el => {
+  const nodes = document.querySelectorAll("[data-text]");
+  await Promise.all(Array.from(nodes).map(async el => {
     const key = norm(el.getAttribute("data-text"));
     if(!key) return;
     const txt = (await fetchText(`content/${key}.txt`)).trim();
@@ -85,8 +68,8 @@ async function hydrateTexts(){
 }
 
 async function hydrateHrefs(){
-  const nodes = qa("[data-href]");
-  await Promise.all(nodes.map(async el => {
+  const nodes = document.querySelectorAll("[data-href]");
+  await Promise.all(Array.from(nodes).map(async el => {
     const key = norm(el.getAttribute("data-href"));
     if(!key) return;
     const txt = (await fetchText(`content/${key}.txt`)).trim();
@@ -95,8 +78,8 @@ async function hydrateHrefs(){
 }
 
 function wireMobileMenu(){
-  const b = q("[data-burger]");
-  const m = q("[data-mobilemenu]");
+  const b = document.querySelector("[data-burger]");
+  const m = document.querySelector("[data-mobilemenu]");
   if(b && m) b.addEventListener("click", () => m.classList.toggle("open"));
 }
 
@@ -127,8 +110,7 @@ function expandTrainings(db, fromDate, toDate){
   const trainings = db.trainings || [];
   trainings.forEach(t=>{
     const baseStart = parseLocal(t.start);
-    if(Number.isNaN(baseStart.getTime())) return;
-
+    if(Number.isNaN(baseStart.getTime())){ return; }
     const durMin = Number(t.durationMin || 60);
     const recur = t.recurrence || {type:"none"};
     const until = recur.until ? new Date(recur.until + "T23:59:59") : toDate;
@@ -191,15 +173,17 @@ function idMap(arr){
 
 function setActiveNav(){
   const current = (location.pathname.split("/").pop() || "index.html");
-  qa(".navlinks a").forEach(a=>{
+  document.querySelectorAll(".navlinks a").forEach(a=>{
     a.classList.toggle("active", a.getAttribute("href")===current);
   });
 }
 
 function openModal(modal, title, bodyHtml){
   if(!modal) return;
-  q("[data-modal-title]", modal).textContent = title || "";
-  q("[data-modal-body]", modal).innerHTML = bodyHtml || "";
+  const t = modal.querySelector("[data-modal-title]");
+  const b = modal.querySelector("[data-modal-body]");
+  if(t) t.textContent = title || "";
+  if(b) b.innerHTML = bodyHtml || "";
   modal.classList.add("open");
   document.body.style.overflow="hidden";
 }
@@ -211,8 +195,8 @@ function closeModal(modal){
 function wireModal(modal){
   if(!modal) return;
   modal.addEventListener("click", (e)=>{ if(e.target === modal) closeModal(modal); });
-  const closeBtn = q("[data-modal-close]", modal);
-  if(closeBtn) closeBtn.addEventListener("click", ()=>closeModal(modal));
+  const c = modal.querySelector("[data-modal-close]");
+  if(c) c.addEventListener("click", ()=>closeModal(modal));
   window.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(modal); });
 }
 
@@ -318,11 +302,7 @@ function makeSelectOptions(sel, items, placeholder){
 }
 
 function escapeHtml(s){
-  return (s||"")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;");
+  return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 }
 
 function buildDetails(inst, maps){
@@ -366,61 +346,51 @@ function applyFilters(instances, coachId, locationId, playerId){
 async function homePage(){
   const db = await loadDB();
   const maps = { players: idMap(db.players), coaches: idMap(db.coaches), locations: idMap(db.locations) };
-
-  const localNote = q("[data-local-only]");
+  const localNote = document.querySelector("[data-local-only]");
   if(localNote && window.__DB_SOURCE==="local") localNote.style.display = "block";
-
-  const localReset = q("[data-local-reset]");
+  const localReset = document.querySelector("[data-local-reset]");
   if(localReset) localReset.addEventListener("click", ()=>{ clearLocalDB(); location.reload(); });
-
-  const monthLabel = q("[data-month-label]");
-  const calendarEl = q("[data-calendar]");
-  const upcomingBody = q("[data-upcoming-body]");
-  const modal = q("[data-modal]");
-  wireModal(modal);
-
-  // Če na tej strani teh elementov ni, se samo ustavi (ne sesuj).
-  if(!calendarEl || !upcomingBody || !monthLabel) return;
-
-  const coachSel = q("[data-filter-coach]");
-  const locSel = q("[data-filter-location]");
-  const playerSel = q("[data-filter-player]");
-
-  makeSelectOptions(coachSel, db.coaches, "Vsi trenerji");
-  makeSelectOptions(locSel, db.locations, "Vse lokacije");
-  makeSelectOptions(playerSel, db.players, "Vsi igralci");
 
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth(), 1);
   const to = addDays(now, Number(db.settings?.publicDaysAhead || 60));
   let instances = expandTrainings(db, addDays(from, -10), to);
 
+  const monthLabel = document.querySelector("[data-month-label]");
+  const calendarEl = document.querySelector("[data-calendar]");
+  const upcomingBody = document.querySelector("[data-upcoming-body]");
+  const modal = document.querySelector("[data-modal]");
+  wireModal(modal);
+
+  const coachSel = document.querySelector("[data-filter-coach]");
+  const locSel = document.querySelector("[data-filter-location]");
+  const playerSel = document.querySelector("[data-filter-player]");
+
+  makeSelectOptions(coachSel, db.coaches, "Vsi trenerji");
+  makeSelectOptions(locSel, db.locations, "Vse lokacije");
+  makeSelectOptions(playerSel, db.players, "Vsi igralci");
+
   let viewMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const emptyText = (await fetchText("content/home/upcoming/empty.txt")).trim();
 
   function render(){
-    const filtered = applyFilters(
-      instances,
-      coachSel ? coachSel.value : "",
-      locSel ? locSel.value : "",
-      playerSel ? playerSel.value : ""
-    );
+    const filtered = applyFilters(instances, coachSel?.value || "", locSel?.value || "", playerSel?.value || "");
 
     const monthFrom = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
     const monthTo = new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 0);
     const calItems = filtered.filter(x=>x.start >= addDays(monthFrom, -1) && x.start <= addDays(monthTo, 1));
 
-    monthLabel.textContent = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth()+1).padStart(2,"0")}`;
+    if(monthLabel) monthLabel.textContent = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth()+1).padStart(2,"0")}`;
     buildCalendar(calendarEl, calItems, viewMonth, maps);
 
     const upItems = filtered.filter(x=>x.start >= now && x.start <= to).slice(0, 40);
     renderUpcoming(upcomingBody, upItems, maps, emptyText);
   }
 
-  const prevBtn = q("[data-month-prev]");
-  const nextBtn = q("[data-month-next]");
-  if(prevBtn) prevBtn.addEventListener("click", ()=>{ viewMonth = addMonths(viewMonth, -1); render(); });
-  if(nextBtn) nextBtn.addEventListener("click", ()=>{ viewMonth = addMonths(viewMonth, 1); render(); });
+  const prev = document.querySelector("[data-month-prev]");
+  const next = document.querySelector("[data-month-next]");
+  if(prev) prev.addEventListener("click", ()=>{ viewMonth = addMonths(viewMonth, -1); render(); });
+  if(next) next.addEventListener("click", ()=>{ viewMonth = addMonths(viewMonth, 1); render(); });
   [coachSel, locSel, playerSel].filter(Boolean).forEach(s=>s.addEventListener("change", render));
 
   document.addEventListener("click", (e)=>{
@@ -429,19 +399,17 @@ async function homePage(){
     const tr = t.closest?.("tr[data-instance-id]");
     const id = ev?.dataset?.instanceId || tr?.dataset?.instanceId;
     if(!id) return;
-
     const inst = instances.find(x=>x.instanceId===id);
     if(!inst) return;
-
-    if(modal) openModal(modal, inst.title, buildDetails(inst, maps));
+    openModal(modal, inst.title, buildDetails(inst, maps));
   });
 
   render();
 
   const next7 = instances.filter(x=>x.start >= now && x.start <= addDays(now, 7));
-  const k1 = q("[data-kpi-week]");
-  const k2 = q("[data-kpi-next]");
-  const k3 = q("[data-kpi-players]");
+  const k1 = document.querySelector("[data-kpi-week]");
+  const k2 = document.querySelector("[data-kpi-next]");
+  const k3 = document.querySelector("[data-kpi-players]");
   if(k1) k1.textContent = String(next7.length);
   if(k2) k2.textContent = String(instances.filter(x=>x.start>=now && x.start<=to).length);
   if(k3) k3.textContent = String((db.players||[]).length);
@@ -482,10 +450,10 @@ function optHtml(opts, selected){
 }
 
 function renderAdminLists(db, maps){
-  const playersT = q("[data-admin-players]");
-  const coachesT = q("[data-admin-coaches]");
-  const locsT = q("[data-admin-locations]");
-  const trainingsT = q("[data-admin-trainings]");
+  const playersT = document.querySelector("[data-admin-players]");
+  const coachesT = document.querySelector("[data-admin-coaches]");
+  const locsT = document.querySelector("[data-admin-locations]");
+  const trainingsT = document.querySelector("[data-admin-trainings]");
   if(!playersT || !coachesT || !locsT || !trainingsT) return;
 
   playersT.innerHTML = (db.players||[]).map(p=>`
@@ -554,9 +522,9 @@ function renderMultiSelectUI(root, ms){
     <div class="chips" data-ms-options></div>
   `;
 
-  const chips = q("[data-ms-chips]", root);
-  const opts = q("[data-ms-options]", root);
-  const search = q("[data-ms-search]", root);
+  const chips = root.querySelector("[data-ms-chips]");
+  const opts = root.querySelector("[data-ms-options]");
+  const search = root.querySelector("[data-ms-search]");
 
   function draw(filter){
     chips.innerHTML = "";
@@ -567,15 +535,15 @@ function renderMultiSelectUI(root, ms){
       chip.innerHTML = `${escapeHtml(name)} <button type="button" data-id="${id}">×</button>`;
       chips.appendChild(chip);
     });
-    qa("button", chips).forEach(b=>{
+    chips.querySelectorAll("button").forEach(b=>{
       b.addEventListener("click", ()=>{ ms.selected.delete(b.dataset.id); draw(search.value); });
     });
 
-    const qv = (filter||"").toLowerCase().trim();
+    const q = (filter||"").toLowerCase().trim();
     const show = ms.options.filter(o=>{
       if(ms.selected.has(o.id)) return false;
-      if(!qv) return true;
-      return (o.name||"").toLowerCase().includes(qv);
+      if(!q) return true;
+      return (o.name||"").toLowerCase().includes(q);
     }).slice(0, 24);
 
     opts.innerHTML = "";
@@ -611,7 +579,7 @@ async function adminPage(){
   }
   let maps = remap();
 
-  const modal = q("[data-modal]");
+  const modal = document.querySelector("[data-modal]");
   wireModal(modal);
 
   function syncRender(){
@@ -622,19 +590,17 @@ async function adminPage(){
     const now = new Date();
     const to = new Date(now.getTime() + Number(db.settings?.publicDaysAhead||60)*86400000);
     const inst = expandTrainings(db, addDays(now,-1), to);
-
-    const k1 = q("[data-admin-kpi-tr]");
-    const k2 = q("[data-admin-kpi-instances]");
-    const k3 = q("[data-admin-kpi-players]");
+    const k1 = document.querySelector("[data-admin-kpi-tr]");
+    const k2 = document.querySelector("[data-admin-kpi-instances]");
+    const k3 = document.querySelector("[data-admin-kpi-players]");
     if(k1) k1.textContent = String((db.trainings||[]).length);
     if(k2) k2.textContent = String(inst.filter(x=>x.start>=now).length);
     if(k3) k3.textContent = String((db.players||[]).length);
   }
 
   function openForm(title, innerHtml, onSave){
-    if(!modal) return;
     openModal(modal, title, innerHtml);
-    const form = q("form", modal);
+    const form = modal?.querySelector("form");
     if(!form) return;
     form.addEventListener("submit", (e)=>{
       e.preventDefault();
@@ -644,13 +610,13 @@ async function adminPage(){
     });
   }
 
-  const exportBtn = q("[data-admin-export]");
+  const exportBtn = document.querySelector("[data-admin-export]");
   if(exportBtn) exportBtn.addEventListener("click", ()=>{
     downloadText("db.json", JSON.stringify(db, null, 2));
     alert("Preneseno: db.json. Zamenjaj datoteko /data/db.json na hostingu.");
   });
 
-  const settingsBtn = q("[data-admin-settings]");
+  const settingsBtn = document.querySelector("[data-admin-settings]");
   if(settingsBtn) settingsBtn.addEventListener("click", ()=>{
     const cur = Number(db.settings?.publicDaysAhead || 60);
     openForm("Nastavitve prikaza", `
@@ -668,8 +634,8 @@ async function adminPage(){
     });
   });
 
-  // === PUBLISH (FIX) ===
-  const publishBtn = q("[data-admin-publish]");
+  // ===== PUBLISH (FIXED) =====
+  const publishBtn = document.querySelector("[data-admin-publish]");
   if(publishBtn) publishBtn.addEventListener("click", async ()=>{
     const storageKey = "tp_publish_key";
     if(publishBtn.dataset.publishing === "1") return;
@@ -730,7 +696,7 @@ async function adminPage(){
     }
   });
 
-  const resetBtn = q("[data-admin-reset]");
+  const resetBtn = document.querySelector("[data-admin-reset]");
   if(resetBtn) resetBtn.addEventListener("click", ()=>{
     if(confirm("Počistim lokalne spremembe na tej napravi?")){
       clearLocalDB();
@@ -738,7 +704,7 @@ async function adminPage(){
     }
   });
 
-  const importBtn = q("[data-admin-import]");
+  const importBtn = document.querySelector("[data-admin-import]");
   if(importBtn) importBtn.addEventListener("click", async ()=>{
     const f = await filePick(".json");
     if(!f) return;
@@ -754,7 +720,7 @@ async function adminPage(){
     }
   });
 
-  const addPlayerBtn = q("[data-add-player]");
+  const addPlayerBtn = document.querySelector("[data-add-player]");
   if(addPlayerBtn) addPlayerBtn.addEventListener("click", ()=>{
     openForm("Dodaj igralca", `
       <form>
@@ -769,7 +735,7 @@ async function adminPage(){
     });
   });
 
-  const addCoachBtn = q("[data-add-coach]");
+  const addCoachBtn = document.querySelector("[data-add-coach]");
   if(addCoachBtn) addCoachBtn.addEventListener("click", ()=>{
     openForm("Dodaj trenerja", `
       <form>
@@ -784,7 +750,7 @@ async function adminPage(){
     });
   });
 
-  const addLocBtn = q("[data-add-loc]");
+  const addLocBtn = document.querySelector("[data-add-loc]");
   if(addLocBtn) addLocBtn.addEventListener("click", ()=>{
     openForm("Dodaj lokacijo", `
       <form>
@@ -808,13 +774,10 @@ async function adminPage(){
     });
   });
 
-  const addTrBtn = q("[data-add-tr]");
+  const addTrBtn = document.querySelector("[data-add-tr]");
   if(addTrBtn) addTrBtn.addEventListener("click", ()=>{
-    if(!modal) return;
-
     const playersMS = buildMultiSelect(db.players||[], []);
     const assistantsMS = buildMultiSelect(db.coaches||[], []);
-
     openModal(modal, "Dodaj trening", `
       <form>
         <label class="small">Naziv</label>
@@ -877,10 +840,11 @@ async function adminPage(){
       </form>
     `);
 
-    renderMultiSelectUI(q("[data-ms-assist]", modal), assistantsMS);
-    renderMultiSelectUI(q("[data-ms-players]", modal), playersMS);
+    renderMultiSelectUI(modal?.querySelector("[data-ms-assist]"), assistantsMS);
+    renderMultiSelectUI(modal?.querySelector("[data-ms-players]"), playersMS);
 
-    const form = q("form", modal);
+    const form = modal?.querySelector("form");
+    if(!form) return;
     form.addEventListener("submit", (e)=>{
       e.preventDefault();
       const fd = new FormData(form);
@@ -898,7 +862,7 @@ async function adminPage(){
       db.trainings.push({
         id: uuid("t_"),
         title: String(fd.get("title")||"Trening").trim(),
-        start: startVal,
+        start: String(fd.get("start")||"").trim(),
         durationMin: Number(fd.get("durationMin")||60),
         locationId: String(fd.get("locationId")||"").trim(),
         headCoachId: String(fd.get("headCoachId")||"").trim(),
@@ -907,17 +871,14 @@ async function adminPage(){
         notes: String(fd.get("notes")||"").trim(),
         recurrence: recurType==="none" ? {type:"none"} : recur
       });
-
       closeModal(modal);
       syncRender();
     });
   });
 
-  // (Urejanje/brisanje vrstic ostane, kot pri tebi — tu je dovolj, da ne crkne publish)
   document.addEventListener("click", (e)=>{
     const btn = e.target.closest?.("button[data-act]");
     if(!btn) return;
-
     const act = btn.dataset.act;
     const id = btn.dataset.id;
 
@@ -931,8 +892,157 @@ async function adminPage(){
     if(act==="del-loc"){ if(confirm("Izbrišem lokacijo?")){ delArr("locations"); syncRender(); } }
     if(act==="del-tr"){ if(confirm("Izbrišem trening?")){ delArr("trainings"); syncRender(); } }
 
-    // Če želiš nazaj še edit forme (player/coach/loc/tr), jih lahko prilepim v naslednjem koraku,
-    // ampak jedro problema (prazna stran) je že rešeno.
+    if(act==="edit-player"){
+      const p = (db.players||[]).find(x=>x.id===id);
+      if(!p) return;
+      openForm("Uredi igralca", `
+        <form>
+          <label class="small">Ime</label>
+          <input class="input" name="name" value="${escapeHtml(p.name||"")}" required>
+          <div class="hr"></div>
+          <button class="btn primary" type="submit">Shrani</button>
+        </form>
+      `, fd=>{ p.name = String(fd.get("name")||"").trim(); });
+    }
+
+    if(act==="edit-coach"){
+      const c = (db.coaches||[]).find(x=>x.id===id);
+      if(!c) return;
+      openForm("Uredi trenerja", `
+        <form>
+          <label class="small">Ime</label>
+          <input class="input" name="name" value="${escapeHtml(c.name||"")}" required>
+          <div class="hr"></div>
+          <button class="btn primary" type="submit">Shrani</button>
+        </form>
+      `, fd=>{ c.name = String(fd.get("name")||"").trim(); });
+    }
+
+    if(act==="edit-loc"){
+      const l = (db.locations||[]).find(x=>x.id===id);
+      if(!l) return;
+      openForm("Uredi lokacijo", `
+        <form>
+          <label class="small">Ime</label>
+          <input class="input" name="name" value="${escapeHtml(l.name||"")}" required>
+          <label class="small" style="margin-top:10px; display:block;">Naslov</label>
+          <input class="input" name="address" value="${escapeHtml(l.address||"")}">
+          <label class="small" style="margin-top:10px; display:block;">Google Maps link</label>
+          <input class="input" name="mapsUrl" value="${escapeHtml(l.mapsUrl||"")}">
+          <div class="hr"></div>
+          <button class="btn primary" type="submit">Shrani</button>
+        </form>
+      `, fd=>{
+        l.name = String(fd.get("name")||"").trim();
+        l.address = String(fd.get("address")||"").trim();
+        l.mapsUrl = String(fd.get("mapsUrl")||"").trim();
+      });
+    }
+
+    if(act==="edit-tr"){
+      const t = (db.trainings||[]).find(x=>x.id===id);
+      if(!t) return;
+
+      const playersMS = buildMultiSelect(db.players||[], t.playerIds||[]);
+      const assistantsMS = buildMultiSelect(db.coaches||[], t.assistantCoachIds||[]);
+      const recurType = t.recurrence?.type || "none";
+      const recurInterval = Number(t.recurrence?.interval || 1);
+      const recurUntil = t.recurrence?.until || "";
+
+      openModal(modal, "Uredi trening", `
+        <form>
+          <label class="small">Naziv</label>
+          <input class="input" name="title" value="${escapeHtml(t.title||"")}" required>
+
+          <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+            <div>
+              <label class="small">Začetek (YYYY-MM-DDTHH:MM)</label>
+              <input class="input" name="start" type="datetime-local" value="${escapeHtml(t.start||"")}" required>
+            </div>
+            <div>
+              <label class="small">Trajanje (min)</label>
+              <input class="input" name="durationMin" type="number" value="${String(t.durationMin||60)}" min="15" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+            <div>
+              <label class="small">Lokacija</label>
+              <select class="input" name="locationId" required>
+                ${optHtml(db.locations||[], t.locationId)}
+              </select>
+            </div>
+            <div>
+              <label class="small">Glavni trener</label>
+              <select class="input" name="headCoachId" required>
+                ${optHtml(db.coaches||[], t.headCoachId)}
+              </select>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+          <h3>Pomočniki</h3>
+          <div data-ms-assist></div>
+
+          <div class="hr"></div>
+          <h3>Igralci</h3>
+          <div data-ms-players></div>
+
+          <div class="hr"></div>
+          <label class="small">Ponavljanje</label>
+          <div class="grid" style="grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:8px;">
+            <select class="input" name="recurType">
+              <option value="none" ${recurType==="none"?"selected":""}>Brez</option>
+              <option value="weekly" ${recurType==="weekly"?"selected":""}>Tedensko</option>
+              <option value="biweekly" ${recurType==="biweekly"?"selected":""}>Na 2 tedna</option>
+              <option value="monthly" ${recurType==="monthly"?"selected":""}>Mesečno</option>
+              <option value="yearly" ${recurType==="yearly"?"selected":""}>Letno</option>
+            </select>
+            <input class="input" name="recurInterval" type="number" value="${String(recurInterval)}" min="1">
+            <input class="input" name="recurUntil" type="date" value="${escapeHtml(recurUntil)}" placeholder="do (YYYY-MM-DD)">
+          </div>
+
+          <div class="hr"></div>
+          <label class="small">Opombe</label>
+          <textarea name="notes">${escapeHtml(t.notes||"")}</textarea>
+
+          <div class="hr"></div>
+          <button class="btn primary" type="submit">Shrani</button>
+        </form>
+      `);
+
+      renderMultiSelectUI(modal?.querySelector("[data-ms-assist]"), assistantsMS);
+      renderMultiSelectUI(modal?.querySelector("[data-ms-players]"), playersMS);
+
+      const form = modal?.querySelector("form");
+      if(!form) return;
+      form.addEventListener("submit", (e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const type = String(fd.get("recurType")||"none");
+        const startVal = String(fd.get("start")||"").trim();
+        if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(startVal)){
+          alert("Start mora biti v formatu YYYY-MM-DDTHH:MM (uporabi picker).");
+          return;
+        }
+        const recur = {type, interval: Number(fd.get("recurInterval")||1)};
+        const until = String(fd.get("recurUntil")||"").trim();
+        if(until) recur.until = until;
+
+        t.title = String(fd.get("title")||"Trening").trim();
+        t.start = String(fd.get("start")||"").trim();
+        t.durationMin = Number(fd.get("durationMin")||60);
+        t.locationId = String(fd.get("locationId")||"").trim();
+        t.headCoachId = String(fd.get("headCoachId")||"").trim();
+        t.assistantCoachIds = readMultiSelect(assistantsMS).filter(x=>x!==t.headCoachId);
+        t.playerIds = readMultiSelect(playersMS);
+        t.notes = String(fd.get("notes")||"").trim();
+        t.recurrence = type==="none" ? {type:"none"} : recur;
+
+        closeModal(modal);
+        syncRender();
+      });
+    }
   });
 
   syncRender();
@@ -952,6 +1062,5 @@ async function main(){
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Če karkoli pade, vsaj pokaži napako v konzoli (ne tiho "prazno").
   main().catch(err => console.error("MAIN CRASH:", err));
 });
