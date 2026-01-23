@@ -1,12 +1,3 @@
-// --- Base-path safe loader (GitHub Pages / project pages) ---
-const __TP_DIR = (() => {
-  const p = location.pathname;
-  if (p.endsWith(".html")) return p.replace(/\/[^\/]*$/, "/"); // /admin.html -> /
-  if (p.endsWith("/")) return p;                               // already dir
-  return p + "/";                                              // /NTK_SAVINJA_AKTIVNOSTI -> /NTK_SAVINJA_AKTIVNOSTI/
-})();
-const __TP_BASE = location.origin + __TP_DIR;
-const withBase = (rel) => new URL(rel, __TP_BASE).toString();
 const CACHE = new Map();
 const STORAGE_KEY = "tp_db_override_v1";
 
@@ -35,15 +26,17 @@ async function loadDB(){
     return local;
   }
   window.__DB_SOURCE = "file";
-  return await fetch(withBase("data/db.json"), { cache: "no-store" });
+  return await fetchJSON("data/db.json");
 }
 
-async function fetchText(path) {
-  const res = await fetch(withBase(path), { cache: "no-store" });
-  if (!res.ok) throw new Error(`Fetch failed ${res.status} for ${path}`);
-  return await res.text();
+async function fetchText(url){
+  if(CACHE.has(url)) return CACHE.get(url);
+  const res = await fetch(url, { cache: "no-store" });
+  if(!res.ok) return "";
+  const txt = await res.text();
+  CACHE.set(url, txt);
+  return txt;
 }
-
 
 async function fetchJSON(url){
   const res = await fetch(url, { cache: "no-store" });
