@@ -83,3 +83,17 @@ textarea{min-height:120px;resize:vertical}
   .hamburger{display:block;margin-left:auto}
   .footer-grid{grid-template-columns:1fr}
 }
+/* === MODAL SCROLL FIX (mobile) === */
+[data-modal].open{
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 12px; /* da se vsebina ne lepi na rob */
+}
+
+/* prva “kartica” znotraj modala naj bo scrollable */
+[data-modal].open > *{
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px); /* moderni mobilni brskalniki */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
