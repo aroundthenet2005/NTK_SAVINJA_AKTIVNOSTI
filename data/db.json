@@ -48,19 +48,19 @@
   "coaches": [
     {
       "id": "c1",
-      "name": "Glavni trener"
+      "name": "JAKA GOLAVŠEK"
     },
     {
       "id": "c2",
-      "name": "Pomočnik 1"
+      "name": "PATRIK ROSC"
     }
   ],
   "locations": [
     {
       "id": "l1",
-      "name": "Dvorana A",
-      "address": "Naslov A",
-      "mapsUrl": "https://www.google.com/maps"
+      "name": "DVORANA GRIŽE",
+      "address": "Osnovna Šola Griže",
+      "mapsUrl": "https://maps.app.goo.gl/jXvcx5gLSGMZPCEc6"
     },
     {
       "id": "l2",
