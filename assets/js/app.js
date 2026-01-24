@@ -179,14 +179,18 @@ function setActiveNav(){
 }
 
 function openModal(modal, title, bodyHtml){
-  if(!modal) return;
-  const t = modal.querySelector("[data-modal-title]");
-  const b = modal.querySelector("[data-modal-body]");
-  if(t) t.textContent = title || "";
-  if(b) b.innerHTML = bodyHtml || "";
+  modal.querySelector("[data-modal-title]").textContent = title || "";
+  const body = modal.querySelector("[data-modal-body]");
+  body.innerHTML = bodyHtml || "";
+
   modal.classList.add("open");
   document.body.style.overflow="hidden";
+
+  // reset scroll, da vrh/dno nista “odrezana” na telefonu
+  modal.scrollTop = 0;
+  body.scrollTop = 0;
 }
+
 function closeModal(modal){
   if(!modal) return;
   modal.classList.remove("open");
