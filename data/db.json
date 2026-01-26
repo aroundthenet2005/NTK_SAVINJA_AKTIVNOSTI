@@ -69,5 +69,27 @@
       "mapsUrl": "https://www.google.com/maps"
     }
   ],
-  "trainings": []
+  "trainings": [
+    {
+      "id": "t_e3b9f188_19bf89e8d71",
+      "title": "Četrtkov trening",
+      "start": "2026-01-31T06:27",
+      "durationMin": 120,
+      "locationId": "l1",
+      "headCoachId": "c1",
+      "assistantCoachIds": [],
+      "playerIds": [
+        "p_1cc528ef_19be7c4865b",
+        "p_91c6a37d_19be7e34e8b",
+        "p_61258738_19be81e7462",
+        "p_fab47fc3_19be81e9b52",
+        "p_12070d0c_19be81eaf1d"
+      ],
+      "notes": "Igra se tekme",
+      "recurrence": {
+        "type": "weekly",
+        "interval": 1
+      }
+    }
+  ]
 }
