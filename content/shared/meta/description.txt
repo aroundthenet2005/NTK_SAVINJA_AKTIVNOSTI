@@ -1,0 +1,1 @@
+Javni koledar treningov (lokacija, ura, trener, igralci).

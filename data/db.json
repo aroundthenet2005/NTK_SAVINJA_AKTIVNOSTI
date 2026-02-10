@@ -1,0 +1,103 @@
+{
+  "settings": {
+    "timezone": "Europe/Ljubljana",
+    "publicDaysAhead": 365
+  },
+  "players": [
+    {
+      "id": "p_1cc528ef_19be7c4865b",
+      "name": "DOMEN HOHNJEC"
+    },
+    {
+      "id": "p_91c6a37d_19be7e34e8b",
+      "name": "MIHA PODOBNIK"
+    },
+    {
+      "id": "p_61258738_19be81e7462",
+      "name": "MATIC ČOPAR"
+    },
+    {
+      "id": "p_fab47fc3_19be81e9b52",
+      "name": "BRIN VOVK PETROVSKI"
+    },
+    {
+      "id": "p_12070d0c_19be81eaf1d",
+      "name": "MAJA FATUR"
+    },
+    {
+      "id": "p_6e341ca9_19be81ec4b4",
+      "name": "BOR MARKOVIĆ"
+    },
+    {
+      "id": "p_e83681c5_19be829c50b",
+      "name": "MIHA FATUR"
+    },
+    {
+      "id": "p_44b04dbb_19be8332b68",
+      "name": "ALJAŽ BREZOVNIK"
+    },
+    {
+      "id": "p_5d33b2b9_19be87f9351",
+      "name": "LOVRO HOZJAN"
+    },
+    {
+      "id": "p_1cf952c8_19bec6d9784",
+      "name": "ALEKS KOŽELJ"
+    },
+    {
+      "id": "p_e41bd203_19c0ee62d10",
+      "name": "JAKA KRANJC"
+    },
+    {
+      "id": "p_759c4e00_19c48ea138c",
+      "name": "TOMAŽ PERTOVT"
+    }
+  ],
+  "coaches": [
+    {
+      "id": "c1",
+      "name": "JAKA GOLAVŠEK"
+    },
+    {
+      "id": "c2",
+      "name": "PATRIK ROSC"
+    }
+  ],
+  "locations": [
+    {
+      "id": "l1",
+      "name": "DVORANA GRIŽE",
+      "address": "Osnovna Šola Griže",
+      "mapsUrl": "https://maps.app.goo.gl/jXvcx5gLSGMZPCEc6"
+    },
+    {
+      "id": "l2",
+      "name": "Dvorana B",
+      "address": "Naslov B",
+      "mapsUrl": "https://www.google.com/maps"
+    }
+  ],
+  "trainings": [
+    {
+      "id": "t_e3b9f188_19bf89e8d71",
+      "title": "Četrtkov trening",
+      "start": "2026-01-31T06:27",
+      "durationMin": 120,
+      "locationId": "l1",
+      "headCoachId": "c1",
+      "assistantCoachIds": [],
+      "playerIds": [
+        "p_1cc528ef_19be7c4865b",
+        "p_91c6a37d_19be7e34e8b",
+        "p_61258738_19be81e7462",
+        "p_fab47fc3_19be81e9b52",
+        "p_12070d0c_19be81eaf1d"
+      ],
+      "notes": "Igra se tekme",
+      "recurrence": {
+        "type": "weekly",
+        "interval": 1
+      }
+    }
+  ]
+}
